@@ -1,5 +1,6 @@
 [package]
 name = "rusted-learning"
+author = "Soumyadip Moni"
 version = "0.1.0"
 edition = "2021"
 
