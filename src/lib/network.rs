@@ -44,6 +44,6 @@ impl Network<'_> {
             self.data.push(current.clone());
         }
 
-        
+        current.data[0].to_owned()
     }
 }
