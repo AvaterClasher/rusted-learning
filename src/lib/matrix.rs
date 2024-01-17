@@ -40,7 +40,7 @@ impl Matrix {
             panic!("Attempt to multiply of incorrect dimensions")
         }
 
-        let mut res = Matrix::zeros(self.rows, self.cols);
+        let mut res = Matrix::zeros(self.rows, other.cols);
 
         for i in 0..self.rows {
             for j in 0..other.cols {

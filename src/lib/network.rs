@@ -1,4 +1,4 @@
-use super::activations::{self, Activation};
+use super::activations::Activation;
 use super::matrix::Matrix;
 
 pub struct Network<'a> {
@@ -6,11 +6,12 @@ pub struct Network<'a> {
     weights: Vec<Matrix>,
     biases: Vec<Matrix>,
     data: Vec<Matrix>,
+    learning_rate: f64,
     activation: Activation<'a>,
 }
 
 impl Network<'_> {
-    pub fn new<'a>(layers: Vec<usize>, activation: Activation<'a>) -> Network {
+    pub fn new<'a>(layers: Vec<usize>, learning_rate: f64, activation: Activation<'a>) -> Network {
         let mut weights = vec![];
         let mut biases = vec![];
 
@@ -24,6 +25,7 @@ impl Network<'_> {
             weights,
             biases,
             data: vec![],
+            learning_rate,
             activation,
         }
     }
@@ -45,5 +47,40 @@ impl Network<'_> {
         }
 
         current.data[0].to_owned()
+    }
+
+    pub fn back_propagate(&mut self, outputs: Vec<f64>, targets: Vec<f64>) {
+        if targets.len() != self.layers[self.layers.len() - 1] {
+            panic!("Invalid number of targets");
+        }
+
+        let mut parsed = Matrix::from(vec![outputs]);
+        let mut errors = Matrix::from(vec![targets]).subtract(&parsed);
+        let mut gradients = parsed.map(self.activation.derivative);
+
+        for i in (0..self.layers.len() - 1).rev() {
+            gradients = gradients
+                .dot_multiply(&errors)
+                .map(&|x| x * self.learning_rate);
+            self.weights[i] = self.weights[i].add(&gradients.multiply(&self.data[i].transpose()));
+            self.biases[i] = self.biases[i].add(&gradients);
+
+            errors = self.weights[i].transpose().multiply(&errors);
+            gradients = self.data[i].map(self.activation.derivative);
+
+
+        }
+    }
+
+    pub fn train(&mut self, inputs: Vec<Vec<f64>>, targets: Vec<Vec<f64>>, epochs: u16) {
+        for i in 1..=epochs {
+            if epochs < 100 || i % (epochs / 100) == 0 {
+                println!("Epoch {} of {}", i, epochs);
+            }
+            for j in 0..inputs.len() {
+                let outputs = self.feed_forward(inputs[j].clone());
+                self.back_propagate(outputs, targets[j].clone());
+            }
+        }
     }
 }
